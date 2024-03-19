@@ -1,9 +1,12 @@
-const path = require("path");
+import path from "path";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import dotenv from 'dotenv';
 
-module.exports = async function (plop) {
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: `.env.local`, override: true });
+
+export default async function (plop) {
     plop.setPlopfilePath(__dirname);
-    plop.load(path.join(__dirname, 'actions-brokers-generator.js'));
-    const actionsBrokers = plop.getGenerator('actions-brokers');
-    const results = await actionsBrokers.runActions();
-    console.log(results);
+    await plop.load(path.join(__dirname, 'src', 'actions-brokers-generator.js'));
 };

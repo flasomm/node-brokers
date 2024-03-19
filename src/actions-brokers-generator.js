@@ -1,4 +1,7 @@
-module.exports = function (plop) {
+import {closePositions, getPortfolio} from './degiro-actions.js';
+import {getPositions} from './ibkr-actions.js';
+
+export default function (plop) {
     plop.setGenerator('actions-brokers', {
         description: 'List or Close positions from a list of Brokers',
         prompts: [
@@ -6,13 +9,21 @@ module.exports = function (plop) {
                 type: 'list',
                 name: 'broker',
                 message: 'Select Broker',
-                choices: ['Degiro', 'Ibkr', 'Kraken', 'Binance'],
+                choices: ['Degiro', 'Ibkr'],
+            },
+            {
+                when(context) {
+                    return context.broker.includes('Degiro');
+                },
+                type: 'input',
+                name: 'otpCode',
+                message: 'Enter OTP code',
             },
             {
                 type: 'list',
                 name: 'action',
                 message: 'Select Action',
-                choices: ['List Positions', 'Close Position', 'CloseAll'],
+                choices: ['List Positions', 'Close All'],
             },
         ],
         actions: (answers) => {
@@ -23,21 +34,26 @@ module.exports = function (plop) {
                     type: 'listBrokerPositions',
                 });
             }
-            if (answers?.action === 'Close Position') {
+            if (answers?.action === 'Close All') {
                 actions.push({
-                    type: 'listBrokerPositions',
-                });
-            }
-            if (answers?.action === 'CloseAll') {
-                actions.push({
-                    type: 'listBrokerPositions',
+                    type: 'closeBrokerPositions',
                 });
             }
             return actions;
         }
     });
+
     plop.setActionType('listBrokerPositions', async (answers) => {
-        console.log("answers", answers);
+        if(answers.broker === 'Degiro') {
+            await getPortfolio(answers);
+        }
+        if(answers.broker === 'Ibkr') {
+            await getPositions(answers);
+        }
+        return true;
+    });
+    plop.setActionType('closeBrokerPositions', async (answers) => {
+        await closePositions(answers);
         return true;
     });
 };
